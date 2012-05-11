@@ -1,17 +1,23 @@
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class Ladder {
+	private static final int MAX_LADDERS = 20;
 	private Map <Integer, LadderPosition> [] matrixLadder;
 	private int size;	
 	private final int endPosition;
 
 	@SuppressWarnings("unchecked")
 	private Ladder(int numberOfLadders, int endPosition) {
+		if (size > MAX_LADDERS)
+			throw new IndexOutOfBoundsException();
+		
 		size = numberOfLadders;
-		matrixLadder = new HashMap[size];
-		for(int i=0;i<numberOfLadders;i++)
+		matrixLadder = new HashMap[MAX_LADDERS];
+		for(int i=0;i<size;i++)
 			matrixLadder[i] = new HashMap<Integer, LadderPosition>();
 		this.endPosition = endPosition;
 	}
@@ -86,7 +92,20 @@ public class Ladder {
 	}
 
 	public void increase() {
-		// TODO Auto-generated method stub
+		matrixLadder[size++] = new HashMap<Integer, LadderPosition>();
 		
+	}
+	
+	public void decrease() {
+		int last = size-1;
+		for(int prev=0;prev<size-2;prev++) {
+			Map<Integer, LadderPosition> map = matrixLadder[prev];
+			Set<Entry<Integer, LadderPosition>> set = map.entrySet();
+			for( Entry<Integer, LadderPosition> e : set) {
+				if (e.getValue().ladder == last)
+					map.remove(e.getKey());
+			}
+		}
+		matrixLadder[--size] = null;
 	}
 }
