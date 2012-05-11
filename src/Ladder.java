@@ -21,8 +21,17 @@ public class Ladder {
 	}
 
 	public void addLink(LadderPosition lp1, LadderPosition lp2) {
+		if (checkValid(lp1) == false)
+			return;
+		if (checkValid(lp2) == false)
+			return;
+
 		matrixLadder[lp1.ladder].put(lp1.position, lp2);
 		matrixLadder[lp2.ladder].put(lp2.position, lp1);
+	}
+
+	private boolean checkValid(LadderPosition lp) {
+		return lp.ladder < size && lp.position < endPosition;
 	}
 
 	public LadderPosition getLinkedPosition(LadderPosition lp) {
