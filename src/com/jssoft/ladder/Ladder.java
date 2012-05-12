@@ -1,3 +1,4 @@
+package com.jssoft.ladder;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,7 +24,7 @@ public class Ladder {
 		this.endPosition = endPosition;
 	}
 
-	public static Ladder createLadder(int ladders, int endPosition) {
+	public static Ladder create(int ladders, int endPosition) {
 		return new Ladder(ladders, endPosition);
 	}
 

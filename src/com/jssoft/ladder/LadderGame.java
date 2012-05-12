@@ -1,3 +1,4 @@
+package com.jssoft.ladder;
 
 import java.util.Iterator;
 
@@ -8,7 +9,7 @@ public class LadderGame {
 
 	@Test
 	public void makeLadder() {
-		Ladder ladder = Ladder.createLadder(4, 5);
+		Ladder ladder = Ladder.create(4, 5);
 		
 		ladder.addLink(new LadderPosition(2,1), new LadderPosition(3,4));
 		ladder.increase();
