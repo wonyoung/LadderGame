@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 public class Ladder {
@@ -37,6 +38,28 @@ public class Ladder {
 		matrixLadder[lp1.ladder].put(lp1.position, lp2);
 		matrixLadder[lp2.ladder].put(lp2.position, lp1);
 	}
+	
+	public void addLink() {
+		Random random = new Random(System.currentTimeMillis());
+		
+		int ladder = random.nextInt(size-1);
+		int position = random.nextInt(endPosition);
+		
+		LadderPosition lp1 = new LadderPosition(ladder, position);
+		LadderPosition lp2 = new LadderPosition(ladder+1, position);
+		
+		while (getLinkedPosition(lp1) != null
+				|| getLinkedPosition(lp2) != null) {
+
+			ladder = random.nextInt(size-1);
+			position = random.nextInt(endPosition);
+			
+			lp1 = new LadderPosition(ladder, position);
+			lp2 = new LadderPosition(ladder+1, position);	
+		}
+			
+		addLink(lp1, lp2);
+	}
 
 	private boolean checkValid(LadderPosition lp) {
 		return lp.ladder < size && lp.position < endPosition;
@@ -44,6 +67,10 @@ public class Ladder {
 
 	public LadderPosition getLinkedPosition(LadderPosition lp) {
 		return matrixLadder[lp.ladder].get(lp.position);
+	}
+	
+	public Set<Entry<Integer,LadderPosition>> getAllLink(int ladder) {
+		return matrixLadder[ladder].entrySet();
 	}
 
 	public Iterator<LadderPosition> iterator(final int ladder) {
@@ -91,6 +118,10 @@ public class Ladder {
 
 	public int size() {
 		return size;
+	}
+	
+	public int height() {
+		return endPosition;
 	}
 
 	public void increase() {
