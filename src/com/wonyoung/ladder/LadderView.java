@@ -1,17 +1,18 @@
-package com.jssoft.ladder;
+package com.wonyoung.ladder;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
-import android.os.Handler;
+import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
@@ -25,18 +26,32 @@ public class LadderView extends SurfaceView implements Callback {
 	
 	
 	public Paint mLinePaint;
-	public RectF mScratchRect;
+	public Rect mScratchRect;
 
 	class LadderGoThread extends Thread {
 		private SurfaceHolder mSurfaceHolder;
 
+		private int [] color =  {
+				Color.GREEN,
+				Color.MAGENTA,
+				Color.YELLOW,
+				Color.CYAN,
+				Color.BLUE,
+				Color.RED
+		};
+		
 		private Iterator<LadderPosition> mIterator;
 		private LadderPosition mPrevPosition;
 		private LadderPosition mCurrentPosition;
 		private boolean mDrawDone;
-		private int mDrawLine;
 		private boolean mRun = false;
 		public Paint mLinePaint;
+		
+		private List<Rect> lines;
+
+		private int mCanvasWidth;
+		private int mCanvasHeight;
+		
 		public LadderGoThread(SurfaceHolder holder, int ladder) {
 			mSurfaceHolder = holder;
 			mIterator = mLadder.iterator(ladder);
@@ -46,9 +61,24 @@ public class LadderView extends SurfaceView implements Callback {
 			
 			mLinePaint = new Paint();
 			mLinePaint.setAntiAlias(true);
-			mLinePaint.setARGB(255, 50*(ladder%6), 50*((ladder+3)%6), 50*((ladder+5)%6));
+			mLinePaint.setColor(color[ladder % color.length]);
 			
-			mScratchRect = new RectF(0,0,0,0);			
+			getCanvasWidth();
+			lines = new ArrayList<Rect>();			
+			lines.add(getHeaderRect(ladder));
+		}
+
+
+		private void getCanvasWidth() {
+			Canvas c = null;
+			try {
+				c = mSurfaceHolder.lockCanvas(null);
+				mCanvasWidth = c.getWidth();
+				mCanvasHeight = c.getHeight();
+			} finally {
+				if (c!=null)
+					mSurfaceHolder.unlockCanvasAndPost(c);
+			}			
 		}
 
 		@Override
@@ -58,9 +88,14 @@ public class LadderView extends SurfaceView implements Callback {
 
 				try {
 					c = mSurfaceHolder.lockCanvas(null);
+					getNext();
 					synchronized (mSurfaceHolder) {
 						doDraw(c);
 					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return;
 				} finally {
 					if (c!=null)
 						mSurfaceHolder.unlockCanvasAndPost(c);
@@ -68,29 +103,65 @@ public class LadderView extends SurfaceView implements Callback {
 			}
 		}
 
-		private void doDraw(Canvas canvas) {
+		private void getNext() throws InterruptedException {
 			if (mDrawDone) {
 				if (mIterator.hasNext()) {
 					mPrevPosition = mCurrentPosition;
 					mCurrentPosition = mIterator.next();
-					mDrawLine = 0;
-					mDrawDone = false;
+					lines.add(getRect(mPrevPosition, mCurrentPosition));
 				} else {
-					mRun = false;
+					if (mCurrentPosition == null)
+						throw new InterruptedException();
+					else {
+						lines.add(getFooterRect(mCurrentPosition.ladder));
+						mCurrentPosition = null;
+					}
 				}
 			}
-			int distanceX = (canvas.getWidth() - LEFT_MARGIN - RIGHT_MARGIN) / mLadder.size();
 			
-			int x1 = LEFT_MARGIN+mPrevPosition.ladder*distanceX+distanceX/2;
-			int x2 = LEFT_MARGIN+mCurrentPosition.ladder*distanceX+distanceX/2+LINE_WIDTH;
-			int distanceY = (canvas.getHeight() - TOP_MARGIN-BOTTOM_MARGIN) / (mLadder.height()+2);
-			int y1 = TOP_MARGIN+(mPrevPosition.position+1)*distanceY;
-			int y2 = TOP_MARGIN+(mCurrentPosition.position+1)*distanceY+LINE_WIDTH;
-			mScratchRect.set(x1, y1, x2, y2);
-			canvas.drawRect(mScratchRect, mLinePaint);
-			Log.i("DRAW1", x1+" "+y1+" "+x2+" "+y2);
-			if (mDrawLine++ > 1)
-				mDrawDone = true;
+		}
+
+		private Rect getHeaderRect(int ladder) {
+			int distanceX = (mCanvasWidth - LEFT_MARGIN - RIGHT_MARGIN) / mLadder.size();
+			
+			int x1 = LEFT_MARGIN+ladder*distanceX+distanceX/2;
+			int x2 = LEFT_MARGIN+ladder*distanceX+distanceX/2+LINE_WIDTH;
+			int distanceY = (mCanvasHeight - TOP_MARGIN-BOTTOM_MARGIN) / (mLadder.height()+2);
+			int y1 = TOP_MARGIN+(0)*distanceY;
+			int y2 = TOP_MARGIN+(1)*distanceY+LINE_WIDTH;
+
+			return new Rect(x1,y1,x2,y2);
+		}
+
+		private Rect getFooterRect(int ladder) {
+			int distanceX = (mCanvasWidth - LEFT_MARGIN - RIGHT_MARGIN) / mLadder.size();
+			
+			int x1 = LEFT_MARGIN+ladder*distanceX+distanceX/2;
+			int x2 = LEFT_MARGIN+ladder*distanceX+distanceX/2+LINE_WIDTH;
+			int distanceY = (mCanvasHeight - TOP_MARGIN-BOTTOM_MARGIN) / (mLadder.height()+2);
+			int y1 = TOP_MARGIN+(mLadder.height())*distanceY;
+			int y2 = TOP_MARGIN+(mLadder.height()+1)*distanceY+LINE_WIDTH;
+
+			return new Rect(x1,y1,x2,y2);
+		}
+		
+		private Rect getRect(LadderPosition lp1,
+				LadderPosition lp2) {
+			int distanceX = (mCanvasWidth - LEFT_MARGIN - RIGHT_MARGIN) / mLadder.size();
+			
+			int x1 = LEFT_MARGIN+lp1.ladder*distanceX+distanceX/2;
+			int x2 = LEFT_MARGIN+lp2.ladder*distanceX+distanceX/2+LINE_WIDTH;
+			int distanceY = (mCanvasHeight - TOP_MARGIN-BOTTOM_MARGIN) / (mLadder.height()+2);
+			int y1 = TOP_MARGIN+(lp1.position+1)*distanceY;
+			int y2 = TOP_MARGIN+(lp2.position+1)*distanceY+LINE_WIDTH;
+
+			return new Rect(x1,y1,x2,y2);
+		}
+
+		private void doDraw(Canvas canvas) {
+			for (Rect r : lines) {
+				canvas.drawRect(r, mLinePaint);
+			}
 			canvas.save();
 			canvas.restore();
 		}
@@ -102,24 +173,19 @@ public class LadderView extends SurfaceView implements Callback {
 	
 	class LadderThread extends Thread {
 		private SurfaceHolder mSurfaceHolder;
-		private Context mContext;
 		private boolean mRun;
-		private int tempR = 0;
-
 		public LadderThread(SurfaceHolder holder, Context context) {
 			mSurfaceHolder = holder;
-			mContext = context;
-			
 			mLinePaint = new Paint();
 			mLinePaint.setAntiAlias(true);
 			mLinePaint.setARGB(255, 127, 127, 127);
 			
-			mScratchRect = new RectF(0,0,0,0);
+			mScratchRect = new Rect(0,0,0,0);
 		}
 		
 		@Override
 		public void run() {
-			while (mRun) {
+			if (mRun) {
 				Canvas c = null;
 				
 				try {
@@ -197,19 +263,21 @@ public class LadderView extends SurfaceView implements Callback {
 	}
 	
 	LadderGoThread thread;
+	
 	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		
-		mThread.setRunning(false);
-		
-		thread = new LadderGoThread(getHolder(), ladder++);
-		if (ladder > mLadder.size())
+	public boolean onTouchEvent(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {			
+			if (ladder >= mLadder.size())
+				return false;
+
+			LadderGoThread thread = new LadderGoThread(getHolder(), ladder++);
+
+			thread.start();
+			thread.setRunning(true);
+			
 			return true;
-		
-		thread.start();
-		thread.setRunning(true);
-		
-		return super.onKeyDown(keyCode, event);
+		}
+		return false;
 	}
 
 	@Override

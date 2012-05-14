@@ -1,11 +1,11 @@
-package com.jssoft.ladder;
+package com.wonyoung.ladder;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 
-import com.jssoft.ladder.LadderView.LadderGoThread;
-import com.jssoft.ladder.LadderView.LadderThread;
+import com.jssoft.ladder.R;
+import com.wonyoung.ladder.LadderView.LadderThread;
 
 public class LadderDroidActivity extends Activity {
     private LadderView mLadderView;

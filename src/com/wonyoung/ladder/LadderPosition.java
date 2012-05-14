@@ -1,4 +1,4 @@
-package com.jssoft.ladder;
+package com.wonyoung.ladder;
 
 public class LadderPosition {
 	public int ladder;
