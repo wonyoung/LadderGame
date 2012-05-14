@@ -5,11 +5,11 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 
 import com.jssoft.ladder.R;
-import com.wonyoung.ladder.LadderView.LadderThread;
+import com.wonyoung.ladder.LadderView.LadderDrawThread;
 
 public class LadderDroidActivity extends Activity {
     private LadderView mLadderView;
-	private LadderThread mLadderThread;
+	private LadderDrawThread mLadderThread;
 	private Ladder mLadder;
 
 	/** Called when the activity is first created. */
