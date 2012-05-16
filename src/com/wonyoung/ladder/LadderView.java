@@ -144,7 +144,6 @@ public class LadderView extends SurfaceView implements Callback {
 		private boolean mRun;
 		public LadderDrawThread(SurfaceHolder holder, Context context) {
 			mSurfaceHolder = holder;				
-			lines = new ArrayList<RectPaint>();
 		}
 
 		@Override
@@ -238,40 +237,64 @@ public class LadderView extends SurfaceView implements Callback {
         for(int i=0; i<25; i++)
         	mLadder.addLink();
         
-        
-        
+        lines = new ArrayList<RectPaint>();
+
+		mCanvasWidth = getWidth();
+		mCanvasHeight = getHeight();
         
 		SurfaceHolder holder = getHolder();
-		holder.addCallback(this);
+		holder.addCallback(this);		
 		
 		mThread = new LadderDrawThread(holder, context);
 		
 		setFocusable(true);
 	}
+	
 		
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		
+		if (event.getAction() == MotionEvent.ACTION_MOVE) {
+			Log.i("move", Integer.toString((int)event.getHistoricalOrientation(0)));
+			return true;
+		}
+		
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			int x = (int) event.getX();
 			int y = (int) event.getY();
 
-			int distanceX = (mCanvasWidth - LEFT_MARGIN - RIGHT_MARGIN) / mLadder.size();
-			int distanceY = (mCanvasHeight - TOP_MARGIN-BOTTOM_MARGIN) / (mLadder.height()+2);
-
-			if (y > TOP_MARGIN+distanceY)
-				return false;
+			Log.i("multi touch", Integer.toString(event.getPointerCount()));
+			Log.i("coorinate", Integer.toString(getPositionFromYCoordinate(y)));
+			if (getPositionFromYCoordinate(y) >= 0)
+				return true;
 			
-			int ladder = (x - LEFT_MARGIN)/ distanceX;			
-			
-			ladder = Math.max(ladder, 0);
-			ladder = Math.min(ladder, mLadder.size() - 1);
-			
-			new LadderGoThread(ladder).start();
-			
+			new LadderGoThread(getLadderFromXCoordinate(x)).start();
 			return true;
 		}
-		return false;
+		return true;
 	}
+
+
+	private int getLadderFromXCoordinate(int x) {
+		int distanceX = (mCanvasWidth - LEFT_MARGIN - RIGHT_MARGIN) / mLadder.size();
+		int ladder = (x - LEFT_MARGIN)/ distanceX;			
+		
+		ladder = Math.max(ladder, 0);
+		ladder = Math.min(ladder, mLadder.size() - 1);		
+		return ladder;
+	}
+	
+	private int getPositionFromYCoordinate(int y) {
+		int distanceY = (mCanvasHeight - TOP_MARGIN-BOTTOM_MARGIN) / (mLadder.height()+2);
+		int position = (y - TOP_MARGIN + distanceY/2)/ distanceY - 1;
+		
+		position = Math.max(position, -1);
+		position = Math.min(position, mLadder.size());		
+		return position;
+	}
+	
+	
+	
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
